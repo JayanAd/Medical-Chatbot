@@ -1,10 +1,11 @@
 from flask import Flask, render_template,jsonify,request
 from src.helper import download_huggingface_embeddings
 from langchain_community.vectorstores import Pinecone
+# from langchain.vectorstores import Pinecone
 import pinecone
 from langchain import PromptTemplate
 from langchain.chains import RetrievalQA
-from langchain.llms import CTransformers
+from langchain_community.llms import CTransformers
 from src.prompt import *
 from pinecone import Pinecone as PineconeClient
 from dotenv import load_dotenv
@@ -38,10 +39,10 @@ llm=CTransformers(model="model/llama-2-7b-chat.ggmlv3.q4_0.bin",
 # Intilize qa
 
 qa=RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
+    llm=llm, 
+    chain_type="stuff", 
     retriever=docsearch.as_retriever(search_kwargs={'k': 2}),
-    return_source_documents=True,
+    return_source_documents=True, 
     chain_type_kwargs=chain_type_kwargs)
 
 
@@ -50,3 +51,15 @@ qa=RetrievalQA.from_chain_type(
 @app.route("/")
 def index():
     return render_template("chat.html")
+
+@app.route("/get",methods=["GET","POST"])
+def chat():
+    msg = request.form["msg"]
+    input = msg
+    print(input)
+    result = qa({"query":input})
+    print("Response: ",result["result"])
+    return str(result["result"])
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0",port=8080,debug=True)
